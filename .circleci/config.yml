@@ -1,0 +1,18 @@
+version: 2
+jobs:
+  build:
+    steps:
+      - checkout
+      - restore_cache:
+          key: scala-library-dependencies-{{ checksum "build.sbt" }}
+      - run: sbt test:compile
+      - save_cache:
+          paths: [ "~/.m2", "~/.ivy2", "~/.cache/coursier" ]
+          key: scala-library-dependencies-{{ checksum "build.sbt" }}
+      - run: sbt test
+      - run: sbt docker
+      - run: docker build -t 227844131542.dkr.ecr.us-east-1.amazonaws.com/load-to-redshift:latest ./target/docker/
+      - run: ./deploy.sh
+    machine:
+      services:
+        - docker
